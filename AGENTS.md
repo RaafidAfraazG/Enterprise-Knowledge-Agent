@@ -11,6 +11,7 @@ Stack: Python 3.11, LangGraph, LangChain, FastAPI, Qdrant, SQLite, pytest.
 - Tests use Qdrant in-memory (`QdrantClient(":memory:")`) and a temporary SQLite file.
 - Never write secrets into code. Read config from environment variables via `src/kagent/config.py`.
 - Do not try to build or run Docker.
+- Eval, Docker and GitHub Actions files are written here but only executed by GitHub. Validate YAML with a parser; never try to build Docker or run az commands
 
 ## Code rules
 - Python 3.11, type hints everywhere, small functions, docstrings on public functions.

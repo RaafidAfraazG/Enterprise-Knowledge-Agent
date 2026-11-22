@@ -1,0 +1,30 @@
+{"id": "clarify_001", "question": "What's the policy?", "route": "clarify", "expected_answer": "", "must_contain": [], "gold_sql": null, "source_doc": null}
+{"id": "clarify_002", "question": "How much?", "route": "clarify", "expected_answer": "", "must_contain": [], "gold_sql": null, "source_doc": null}
+{"id": "clarify_003", "question": "Tell me about the process", "route": "clarify", "expected_answer": "", "must_contain": [], "gold_sql": null, "source_doc": null}
+{"id": "clarify_004", "question": "Who is responsible?", "route": "clarify", "expected_answer": "", "must_contain": [], "gold_sql": null, "source_doc": null}
+{"id": "clarify_005", "question": "Can you help?", "route": "clarify", "expected_answer": "", "must_contain": [], "gold_sql": null, "source_doc": null}
+{"id": "clarify_006", "question": "What should I do?", "route": "clarify", "expected_answer": "", "must_contain": [], "gold_sql": null, "source_doc": null}
+{"id": "clarify_007", "question": "Is it allowed?", "route": "clarify", "expected_answer": "", "must_contain": [], "gold_sql": null, "source_doc": null}
+{"id": "clarify_008", "question": "When is it due?", "route": "clarify", "expected_answer": "", "must_contain": [], "gold_sql": null, "source_doc": null}
+{"id": "clarify_009", "question": "Where do I go?", "route": "clarify", "expected_answer": "", "must_contain": [], "gold_sql": null, "source_doc": null}
+{"id": "clarify_010", "question": "How does it work?", "route": "clarify", "expected_answer": "", "must_contain": [], "gold_sql": null, "source_doc": null}
+{"id": "clarify_011", "question": "What happens next?", "route": "clarify", "expected_answer": "", "must_contain": [], "gold_sql": null, "source_doc": null}
+{"id": "clarify_012", "question": "Can I get that?", "route": "clarify", "expected_answer": "", "must_contain": [], "gold_sql": null, "source_doc": null}
+{"id": "clarify_013", "question": "Which one applies?", "route": "clarify", "expected_answer": "", "must_contain": [], "gold_sql": null, "source_doc": null}
+{"id": "clarify_014", "question": "Is that correct?", "route": "clarify", "expected_answer": "", "must_contain": [], "gold_sql": null, "source_doc": null}
+{"id": "clarify_015", "question": "Explain this please", "route": "clarify", "expected_answer": "", "must_contain": [], "gold_sql": null, "source_doc": null}
+{"id": "clarify_016", "question": "What about tomorrow?", "route": "clarify", "expected_answer": "", "must_contain": [], "gold_sql": null, "source_doc": null}
+{"id": "clarify_017", "question": "What are the rules?", "route": "clarify", "expected_answer": "", "must_contain": [], "gold_sql": null, "source_doc": null}
+{"id": "clarify_018", "question": "Who approves it?", "route": "clarify", "expected_answer": "", "must_contain": [], "gold_sql": null, "source_doc": null}
+{"id": "clarify_019", "question": "How long does it take?", "route": "clarify", "expected_answer": "", "must_contain": [], "gold_sql": null, "source_doc": null}
+{"id": "clarify_020", "question": "Where is the form?", "route": "clarify", "expected_answer": "", "must_contain": [], "gold_sql": null, "source_doc": null}
+{"id": "clarify_021", "question": "Is there a limit?", "route": "clarify", "expected_answer": "", "must_contain": [], "gold_sql": null, "source_doc": null}
+{"id": "clarify_022", "question": "Can I change it?", "route": "clarify", "expected_answer": "", "must_contain": [], "gold_sql": null, "source_doc": null}
+{"id": "clarify_023", "question": "What do you recommend?", "route": "clarify", "expected_answer": "", "must_contain": [], "gold_sql": null, "source_doc": null}
+{"id": "clarify_024", "question": "Should I ask someone?", "route": "clarify", "expected_answer": "", "must_contain": [], "gold_sql": null, "source_doc": null}
+{"id": "clarify_025", "question": "Do I qualify?", "route": "clarify", "expected_answer": "", "must_contain": [], "gold_sql": null, "source_doc": null}
+{"id": "clarify_026", "question": "What is the deadline?", "route": "clarify", "expected_answer": "", "must_contain": [], "gold_sql": null, "source_doc": null}
+{"id": "clarify_027", "question": "Where can I find it?", "route": "clarify", "expected_answer": "", "must_contain": [], "gold_sql": null, "source_doc": null}
+{"id": "clarify_028", "question": "Why was it rejected?", "route": "clarify", "expected_answer": "", "must_contain": [], "gold_sql": null, "source_doc": null}
+{"id": "clarify_029", "question": "Can you give me the details?", "route": "clarify", "expected_answer": "", "must_contain": [], "gold_sql": null, "source_doc": null}
+{"id": "clarify_030", "question": "Is this mandatory?", "route": "clarify", "expected_answer": "", "must_contain": [], "gold_sql": null, "source_doc": null}

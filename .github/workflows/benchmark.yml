@@ -1,0 +1,78 @@
+name: Paired Azure benchmark
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  benchmark:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    env:
+      LLM_PROVIDER: azure
+      AZURE_OPENAI_API_KEY: ${{ secrets.AZURE_OPENAI_API_KEY }}
+      AZURE_OPENAI_ENDPOINT: ${{ secrets.AZURE_OPENAI_ENDPOINT }}
+      AZURE_OPENAI_CHAT_DEPLOYMENT: ${{ vars.AZURE_OPENAI_CHAT_DEPLOYMENT }}
+      AZURE_OPENAI_EMBED_DEPLOYMENT: ${{ vars.AZURE_OPENAI_EMBED_DEPLOYMENT }}
+      AZURE_OPENAI_ROUTER_DEPLOYMENT: ${{ vars.AZURE_OPENAI_ROUTER_DEPLOYMENT }}
+      AZURE_OPENAI_API_VERSION: ${{ vars.AZURE_OPENAI_API_VERSION || '2024-02-01' }}
+      QDRANT_URL: ${{ secrets.QDRANT_URL }}
+      QDRANT_API_KEY: ${{ secrets.QDRANT_API_KEY }}
+      QDRANT_COLLECTION: eval_bench_${{ github.run_id }}
+      LANGFUSE_PUBLIC_KEY: ${{ secrets.LANGFUSE_PUBLIC_KEY }}
+      LANGFUSE_SECRET_KEY: ${{ secrets.LANGFUSE_SECRET_KEY }}
+      LANGFUSE_HOST: ${{ vars.LANGFUSE_HOST || 'https://cloud.langfuse.com' }}
+      BENCH_LATENCY_N: ${{ vars.BENCH_LATENCY_N || '100' }}
+      BENCH_MAX_ACCURACY_DROP: ${{ vars.BENCH_MAX_ACCURACY_DROP || '0.02' }}
+    steps:
+      - name: Check credentials
+        id: credentials
+        shell: bash
+        run: |
+          if [[ -n "${AZURE_OPENAI_API_KEY:-}" && -n "${AZURE_OPENAI_ENDPOINT:-}" && -n "${QDRANT_URL:-}" && -n "${QDRANT_API_KEY:-}" ]]; then
+            echo 'configured=true' >> "$GITHUB_OUTPUT"
+          else
+            echo 'configured=false' >> "$GITHUB_OUTPUT"
+            echo '::notice::Cloud credentials not configured, skipping benchmark. See docs/SETUP.md'
+            echo 'Cloud credentials not configured, skipping benchmark. See docs/SETUP.md' >> "$GITHUB_STEP_SUMMARY"
+          fi
+      - uses: actions/checkout@v4
+        if: steps.credentials.outputs.configured == 'true'
+      - uses: actions/setup-python@v5
+        if: steps.credentials.outputs.configured == 'true'
+        with:
+          python-version: '3.11'
+          cache: pip
+      - name: Install
+        if: steps.credentials.outputs.configured == 'true'
+        run: pip install -e ".[dev]"
+      - name: Smoke Azure and Qdrant
+        if: steps.credentials.outputs.configured == 'true'
+        run: python scripts/smoke_azure.py
+      - name: Compare profiles
+        id: compare
+        if: steps.credentials.outputs.configured == 'true'
+        shell: bash
+        env:
+          PRICE_CHAT_INPUT_PER_M: ${{ vars.PRICE_CHAT_INPUT_PER_M }}
+          PRICE_CHAT_OUTPUT_PER_M: ${{ vars.PRICE_CHAT_OUTPUT_PER_M }}
+          PRICE_EMBED_PER_M: ${{ vars.PRICE_EMBED_PER_M }}
+        run: |
+          # Empty optional pricing variables must leave model defaults active.
+          for name in PRICE_CHAT_INPUT_PER_M PRICE_CHAT_OUTPUT_PER_M PRICE_EMBED_PER_M; do
+            if [[ -z "${!name}" ]]; then unset "$name"; fi
+          done
+          python -m eval.benchmark --provider azure
+      - name: Render measured README
+        if: always() && steps.credentials.outputs.configured == 'true'
+        run: python scripts/update_readme.py
+      - uses: actions/upload-artifact@v4
+        if: always() && steps.credentials.outputs.configured == 'true'
+        with:
+          name: paired-benchmark-${{ github.run_id }}
+          path: |
+            eval/results/baseline.json
+            eval/results/optimized.json
+            eval/results/comparison.json
+            eval/results/comparison.md
+            README.md
+          if-no-files-found: warn

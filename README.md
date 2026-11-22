@@ -1,83 +1,148 @@
 # Enterprise Knowledge Agent
 
-Company policies, safe SQL answers, and focused follow-up questions—one LangGraph API.
+**Ask a company question in plain English. The agent decides where to look: policy documents, the database, or back at you for more detail.**
 
 [![CI](https://github.com/RaafidAfraazG/Enterprise-Knowledge-Agent/actions/workflows/ci.yml/badge.svg)](https://github.com/RaafidAfraazG/Enterprise-Knowledge-Agent/actions/workflows/ci.yml)
 ![Python 3.11](https://img.shields.io/badge/python-3.11-blue)
+![LangGraph](https://img.shields.io/badge/built%20with-LangGraph-orange)
+![FastAPI](https://img.shields.io/badge/API-FastAPI-009688)
 
-## What it does
+---
 
-Routes company questions to policy documents, structured business data, or clarification.
-Run locally with deterministic fake providers, or use Azure OpenAI and Qdrant Cloud.
+## See it work
 
-| Question type | Example | Answer source |
-| --- | --- | --- |
-| Document | When does carried annual leave expire? | Policy docs via Qdrant |
-| SQL | How many tickets have status closed? | Read-only SQLite |
-| Unclear | What's the policy? | A follow-up question |
+One endpoint, three kinds of questions.
 
-## See it in action
+**Policy question** → searches the documents and cites the source file
 
-Start the service below and open `/docs` to try all three routes in the interactive API.
-[Request and response examples](docs/CONFIGURATION.md#worked-examples) show the complete JSON shape.
+```bash
+curl -X POST localhost:8000/ask -H 'Content-Type: application/json' \
+  -d '{"question": "When does carried annual leave expire?"}'
+```
+```json
+{
+  "answer": "According to the company documents: … expire on March 31 of the following year …",
+  "route": "doc",
+  "sources": ["leave_policy.md"],
+  "sql": null
+}
+```
+
+**Data question** → writes a safe SQL query, runs it, explains the result
+
+```json
+{
+  "answer": "The query returned [[121]] (ticket_count).",
+  "route": "sql",
+  "sources": [],
+  "sql": "SELECT COUNT(*) AS ticket_count FROM tickets WHERE status = 'closed' LIMIT 100"
+}
+```
+
+**Vague question** → asks instead of guessing
+
+```json
+{
+  "answer": "Which policy or business topic would you like to know about?",
+  "route": "clarify",
+  "sources": [],
+  "sql": null
+}
+```
+
+---
 
 ## How it works
 
 ```mermaid
 flowchart LR
-    API[FastAPI] --> Router[Router]
-    Router -->|doc| Doc[Document agent]
-    Router -->|sql| SQL[SQL agent]
-    Router -->|clarify| Clarify[Follow-up question]
-    Doc --> Qdrant[(Qdrant)]
-    SQL --> SQLite[(Read-only SQLite)]
-    API -. optional .-> Cache[TTL/LRU cache]
-    API -. metrics .-> Tracing[Optional Langfuse]
+    U([User question]) --> API[FastAPI]
+    API --> R{Router}
+    R -->|policy| D[Document agent]
+    R -->|data| S[SQL agent]
+    R -->|unclear| C[Clarify agent]
+    D --> Q[(Qdrant<br/>policy docs)]
+    S --> G[SQL guard] --> DB[(SQLite<br/>read-only)]
+    D & S & C --> A([Answer + sources])
 ```
 
-Explicit graph branches share provider interfaces, local request metrics, and optional caching and tracing.
+A small LangGraph router reads each question and sends it to exactly one specialist. Every request is also timed and costed, and it can optionally be traced in Langfuse.
 
-## Highlights
+---
 
-- Multi-agent routing across document retrieval, SQL lookup, and clarification.
-- Safe read-only SQL with parsing, a denylist, and bounded execution.
-- A 200-question evaluation suite with accuracy regression gates.
-- CI/CD to Azure Container Apps with credential-gated cloud stages.
-- Optional Langfuse tracing, token accounting, and estimated request costs.
-- Flag-controlled optimizations with a paired cold-cache benchmark.
+## Why it's built this way
+
+| Concern | What the project does |
+| --- | --- |
+| **Wrong answers** | A 200-question evaluation set (100 document, 70 SQL, 30 clarify) runs in CI and fails the build if accuracy drops. |
+| **Unsafe SQL** | Only a single `SELECT` is allowed: parsed with sqlglot, checked against a denylist, and run on a read-only connection with a 100-row cap. |
+| **Slow or costly answers** | Every request records latency, tokens and estimated cost. Optimizations sit behind flags and are compared to the baseline by a paired benchmark. |
+| **Cloud lock-in during development** | Deterministic fake models and in-memory Qdrant mean the whole project runs and tests offline. |
+
+---
 
 ## Quick start
 
-Use Python 3.11 from the repository root; local fake mode needs no API keys or external services.
-Install dependencies from your package index or cache, then run offline.
+You need Python 3.11. No API keys or cloud accounts are required.
 
 ```bash
+git clone https://github.com/RaafidAfraazG/Enterprise-Knowledge-Agent.git
+cd Enterprise-Knowledge-Agent
 python3.11 -m venv .venv && source .venv/bin/activate
 pip install -e ".[dev]"
-pytest -q
-LLM_PROVIDER=fake PROFILE=baseline QDRANT_URL= TRACING_ENABLED=false uvicorn kagent.api.main:app --host 127.0.0.1 --port 8000
 ```
 
-In a second terminal:
+Run the tests:
 
 ```bash
-curl -X POST http://127.0.0.1:8000/ask -H 'Content-Type: application/json' -d '{"question":"When does carried annual leave expire?"}'
+pytest -q
 ```
 
-Startup creates the demo database and ingests policy documents automatically when needed.
+Start the API (it creates the demo database and loads the policy documents on startup):
 
-## Tech stack
+```bash
+uvicorn kagent.api.main:app --port 8000
+```
 
-`Python 3.11` · `LangGraph` · `LangChain` · `FastAPI` · `Azure OpenAI` · `Qdrant` · `SQLite` · `Langfuse` · `pytest` · `GitHub Actions`
+Then open **http://127.0.0.1:8000/docs** to try the questions above in the interactive API page, or use the `curl` command from the top of this page.
+
+---
+
+## Run it on Azure
+
+The same code runs on Azure OpenAI and Qdrant Cloud, and a GitHub Actions pipeline tests, evaluates and deploys it to Azure Container Apps. Set `LLM_PROVIDER=azure`, add your credentials as repository secrets, and follow the [setup guide](docs/SETUP.md). Without credentials, the cloud stages are skipped and local mode keeps working.
+
+---
 
 ## Results
 
 <!-- RESULTS:START -->
-Deployment-specific accuracy, p50/p95 latency, tokens, and estimated request costs are generated by the **Paired Azure benchmark** workflow and rendered here in its downloadable README artifact.
+Accuracy, p50/p95 latency, tokens and estimated cost per request for the baseline and optimized profiles are produced by the **Paired Azure benchmark** workflow (Actions → Run workflow) and written to this section.
 <!-- RESULTS:END -->
+
+---
+
+## Project layout
+
+```
+src/kagent/
+├── api/            FastAPI app
+├── graph/          Router and the three agents (LangGraph)
+├── llm/            Fake and Azure model providers
+├── retrieval/      Chunking, embedding, Qdrant search
+├── sql/            SELECT-only guard and read-only executor
+└── observability/  Metrics, cost estimates, Langfuse tracing
+data/docs/          15 fictional company policies
+eval/               200-question set, scorer, benchmark
+docs/               Setup, methodology, configuration reference
+```
+
+## Tech stack
+
+`Python 3.11` · `LangGraph` · `LangChain` · `FastAPI` · `Azure OpenAI` · `Qdrant` · `SQLite` · `Langfuse` · `Docker` · `GitHub Actions` · `pytest`
 
 ## Docs
 
 - [Cloud setup and deployment](docs/SETUP.md)
-- [Evaluation and benchmark methodology](docs/METHODOLOGY.md)
-- [Configuration, API, development, and security reference](docs/CONFIGURATION.md)
+- [How evaluation and benchmarks work](docs/METHODOLOGY.md)
+- [Configuration, API, and security reference](docs/CONFIGURATION.md)

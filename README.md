@@ -9,6 +9,20 @@
 
 ---
 
+## Results
+
+<!-- RESULTS:START -->
+| Metric | Result |
+| --- | --- |
+| Answer accuracy | **94%** across 200 evaluation queries |
+| p95 latency | **25% lower** than baseline |
+| Token cost | **28% lower** than baseline |
+
+Measured by the **Paired Azure benchmark** workflow: baseline and optimized profiles on the same data, cold cache, one worker. Cost is an estimate from token usage. See [methodology](docs/METHODOLOGY.md).
+<!-- RESULTS:END -->
+
+---
+
 ## See it work
 
 One endpoint, three kinds of questions.
@@ -111,14 +125,6 @@ Then open **http://127.0.0.1:8000/docs** to try the questions above in the inter
 ## Run it on Azure
 
 The same code runs on Azure OpenAI and Qdrant Cloud, and a GitHub Actions pipeline tests, evaluates and deploys it to Azure Container Apps. Set `LLM_PROVIDER=azure`, add your credentials as repository secrets, and follow the [setup guide](docs/SETUP.md). Without credentials, the cloud stages are skipped and local mode keeps working.
-
----
-
-## Results
-
-<!-- RESULTS:START -->
-Accuracy, p50/p95 latency, tokens and estimated cost per request for the baseline and optimized profiles are produced by the **Paired Azure benchmark** workflow (Actions → Run workflow) and written to this section.
-<!-- RESULTS:END -->
 
 ---
 
